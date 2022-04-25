@@ -17,6 +17,6 @@ for path in fil['Path']:
         new_img = cv2.resize(img, (64,64))
         pth = path.replace("/","_")
         cv2.imwrite(f"resized64/{pth}", new_img)
-        img_blur = cv2.GaussianBlur(new_img,(3,3), sigmaX=0, sigmaY=0)
-        cv2.imwrite(f"resized64edges/{pth}",img_blur)
+        edges = cv2.Canny(image=new_img, threshold1=75, threshold2=120)
+        cv2.imwrite(f"resized64edges/{pth}",edges)
     cnt += 1
