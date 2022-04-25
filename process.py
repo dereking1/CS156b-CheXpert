@@ -14,7 +14,7 @@ for path in fil['Path']:
         print(cnt)
     if cnt < 10:
         img = cv2.imread(PATH + path)
-        new_img = cv2.resize(img, (64,64))
+        new_img = cv2.resize(img, (128,128))
         pth = path.replace("/","_")
         cv2.imwrite(f"resized64/{pth}", new_img)
         edges = cv2.Canny(image=new_img, threshold1=75, threshold2=120)
