@@ -21,15 +21,15 @@ label_columns = ['No Finding', 'Enlarged Cardiomediastinum', 'Cardiomegaly','Lun
 data_path = '/central/groups/CS156b/data/'
 train_path = data_path + 'student_labels/train.csv'
 test_path = data_path + 'student_labels/test_ids.csv'
-imagesize = (32,32)
-degree = 90
+imagesize = (128, 128)
+#degree = 90
 cuda0 = torch.device('cuda:0')
 
 #rotate = T.RandomRotation(degree)
 #policies = [T.AutoAugmentPolicy.CIFAR10, T.AutoAugmentPolicy.IMAGENET, T.AutoAugmentPolicy.SVHN]
 #augmenters = [T.AutoAugment(policy) for policy in policies]
 #augmenter = T.AutoAugment(T.AutoAugmentPolicy.IMAGENET)
-blur = T.GaussianBlur(kernel_size=(5, 9), sigma=(0.1,5))
+blur = T.GaussianBlur(kernel_size=(5, 9), sigma=(1,5))
 equalize = T.RandomEqualize(p=1.0)
 resize = T.Resize(size=imagesize)
 totensor = T.ToTensor()
@@ -49,9 +49,11 @@ def get_train_data():
     df = pd.read_csv(train_path).fillna(0)
     X = []
     Y = []
-
-    for index, row in df.iterrows():
-        if index >= int(df.shape[0]) - 1:
+    
+    i = 0
+    df_dict = df.to_dict('records')
+    for row in df_dict:
+         if i >= int(df.shape[0]) - 1:
             break
         image_path = data_path + row['Path']
 
@@ -65,12 +67,15 @@ def get_train_data():
         Y.append(row[label_columns])
         Y.append(row[label_columns])
 
+        i += 1
+
     return trainload(X,Y)
 
 def get_test_data():
     df = pd.read_csv(test_path)
     X = []
-    for index, row in df.iterrows():
+    df_dict = df.to_dict('records')
+    for row in df_dict:
         image_path = data_path + row['Path']
 
         image = Image.open(image_path)
