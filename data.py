@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import matplotlib.image as mpimg
+import matplotlib.pyplot as plt
 from PIL import Image, ImageOps
 import torch
 import torchvision.transforms as T
@@ -21,9 +21,29 @@ label_columns = ['No Finding', 'Enlarged Cardiomediastinum', 'Cardiomegaly','Lun
 data_path = '/central/groups/CS156b/data/'
 train_path = data_path + 'student_labels/train.csv'
 test_path = data_path + 'student_labels/test_ids.csv'
-imagesize = (64,64)
-
+imagesize = (32,32)
+degree = 90
 cuda0 = torch.device('cuda:0')
+
+#rotate = T.RandomRotation(degree)
+#policies = [T.AutoAugmentPolicy.CIFAR10, T.AutoAugmentPolicy.IMAGENET, T.AutoAugmentPolicy.SVHN]
+#augmenters = [T.AutoAugment(policy) for policy in policies]
+#augmenter = T.AutoAugment(T.AutoAugmentPolicy.IMAGENET)
+blur = T.GaussianBlur(kernel_size=(5, 9), sigma=(0.1,5))
+equalize = T.RandomEqualize(p=1.0)
+resize = T.Resize(size=imagesize)
+totensor = T.ToTensor()
+process2 = T.Compose([equalize, blur, resize, totensor])
+process = T.Compose([resize, totensor])
+
+#def augment(img):
+    #rotated1 = rotate(img)
+    #rotated2 = rotate(img)
+    #randaug = augmenter(img)
+    #blurred1 = blur(img)
+    #blurred2 = blur(img)
+
+    #return rotated1, blurred1, blurred2
 
 def get_train_data():
     df = pd.read_csv(train_path).fillna(0)
@@ -31,19 +51,21 @@ def get_train_data():
     Y = []
 
     for index, row in df.iterrows():
-        if index == int(df.shape[0]/100):
+        if index >= int(df.shape[0]) - 1:
             break
         image_path = data_path + row['Path']
 
         image = Image.open(image_path)
-        imcopy = image.copy()
-        #.resize(imagesize)
-        image_gray = ImageOps.grayscale(imcopy)
+        #imcopy = image.copy()
 
-        X.append(imcopy)
+        X.append(process(image).numpy())
+        X.append(process2(image).numpy())
         image.close()
+
         Y.append(row[label_columns])
-    return X, Y
+        Y.append(row[label_columns])
+
+    return trainload(X,Y)
 
 def get_test_data():
     df = pd.read_csv(test_path)
@@ -52,38 +74,35 @@ def get_test_data():
         image_path = data_path + row['Path']
 
         image = Image.open(image_path)
+        #imcopy = image.copy()
         #.resize(imagesize)
         #image_gray = ImageOps.grayscale(image)
+        X.append(process(image).numpy())
+        image.close()
 
-        X.append(image)
-    trans = T.Compose([T.ToTensor(), T.Resize(size=(64,64))])
-    for i in range(len(X)):
-       X[i] = trans(X[i]).numpy()
+    #trans = T.ToTensor()
+    #trans = T.Resize(size=imagesize)
+    #for i in range(len(X)):
+       #im = trans(X[i]).numpy()
+       #X[i] = im
+    
     testx = torch.from_numpy(np.array(X).astype(np.float32))
-    testx.to(cuda0)
-
+    
     testloader = DataLoader(testx, batch_size=1, shuffle=False)
     return testloader
 
 def trainload(X, Y):
-    trans = T.Compose([T.ToTensor(), T.Resize(size=(64,64))])
-    for i in range(len(X)):
-       X[i] = trans(X[i]).numpy()
-    #trainx = torch.Tensor(X).cuda(device=cuda0)
-    #trainy = torch.Tensor(Y).cuda(device=cuda0)
+    #trans = T.ToTensor()
+    #trans = T.Resize(size=imagesize)
+    #for i in range(len(X)):
+       #threechannel = np.zeros((3,64,64))
+       #im = trans(X[i]).numpy()
+       #for j in range(3):
+           #threechannel[j] = im[0]
+       #X[i] = im
     trainx = torch.from_numpy(np.array(X).astype(np.float32))
     trainy = torch.from_numpy(np.array(Y).astype(np.float32))
-    trainx.to(cuda0)
-    trainy.to(cuda0)
 
     traindata = data_utils.TensorDataset(trainx, trainy)
-    train_loader = DataLoader(traindata, batch_size=256, shuffle=True)
-    return traindata, train_loader
-
-#def main():
-    #X, Y = get_train_data()
-    #print(len(X))
-    #print(len(Y))
-
-#if __name__ == '__main__':
-    
+    train_loader = DataLoader(traindata, batch_size=64, shuffle=True)
+    return train_loader
