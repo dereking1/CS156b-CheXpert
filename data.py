@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from PIL import Image, ImageOps
 import torch
 import torchvision.transforms as T
+import torchvision.transforms.functional as F
 from torch.utils.data import DataLoader
 import torch.utils.data as data_utils
 
@@ -45,6 +46,9 @@ process = T.Compose([resize, totensor])
 
     #return rotated1, blurred1, blurred2
 
+#def process2(img):
+    #return totensor(resize(F.gaussian_blur(F.equalize(img),5)))
+
 def get_train_data():
     df = pd.read_csv(train_path).fillna(0)
     X = []
@@ -53,19 +57,24 @@ def get_train_data():
     i = 0
     df_dict = df.to_dict('records')
     for row in df_dict:
-         if i >= int(df.shape[0]) - 1:
+        if i >= int(df.shape[0]) - 1:
             break
         image_path = data_path + row['Path']
 
         image = Image.open(image_path)
         #imcopy = image.copy()
-
+        #imaget = totensor(image)
+        
         X.append(process(image).numpy())
         X.append(process2(image).numpy())
         image.close()
+        
+        labels = []
+        for label in label_columns:
+            labels.append(row[label])
 
-        Y.append(row[label_columns])
-        Y.append(row[label_columns])
+        Y.append(labels)
+        Y.append(labels)
 
         i += 1
 
@@ -109,5 +118,5 @@ def trainload(X, Y):
     trainy = torch.from_numpy(np.array(Y).astype(np.float32))
 
     traindata = data_utils.TensorDataset(trainx, trainy)
-    train_loader = DataLoader(traindata, batch_size=64, shuffle=True)
+    train_loader = DataLoader(traindata, batch_size=512, shuffle=True, pin_memory=True)
     return train_loader
