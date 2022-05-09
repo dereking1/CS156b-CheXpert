@@ -114,6 +114,7 @@ def trainload(X, Y):
        #for j in range(3):
            #threechannel[j] = im[0]
        #X[i] = im
+
     trainx = torch.from_numpy(np.array(X).astype(np.float32))
     trainy = torch.from_numpy(np.array(Y).astype(np.float32))
 
