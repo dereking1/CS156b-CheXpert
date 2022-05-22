@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import torch.optim as optim
 from data import *
+from split_data import *
 import torch
 import torch.nn as nn
 import torchvision
@@ -109,10 +110,10 @@ def predict(model, testloader, label_len):
     return preds
 
 def main():
-    train_loader = get_train_data()
+    train_loader = dia_train_data()
     testloader = get_test_data()
     
-    n_epochs = 20
+    n_epochs = 10
     (heart_training_loss_history, lung_training_loss_history, other_training_loss_history) = train(train_loader, n_epochs)
     heart_preds = predict(heart_model, testloader, 2)
     lung_preds = predict(lung_model, testloader, 8)
